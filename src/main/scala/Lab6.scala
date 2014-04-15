@@ -93,12 +93,38 @@ object Lab6 extends jsy.util.JsyApplication {
       case _ => Failure("expected intersect", next)
     }
 
-    def intersect(next: Input): ParseResult[RegExpr] = throw new UnsupportedOperationException
+    def intersect(next: Input): ParseResult[RegExpr] = concat(next) match {
+      case Success(r, next) => {
+        def intersects(acc: RegExpr, next: Input): ParseResult[RegExpr] =
+          if (next.atEnd) Success(acc, next)
+          else (next.first, next.rest) match {
+            case ('&', next) => concat(next) match {
+              case Success(r, next) => intersects(RIntersect(acc, r), next)
+              case _ => Failure("expected concat", next)
+            }
+            case _ => Success(acc, next)
+          }
+        intersects(r, next)
+      }
+    }
 
-    def concat(next: Input): ParseResult[RegExpr] = throw new UnsupportedOperationException
+    def concat(next: Input): ParseResult[RegExpr] = not(next) match {
+      case Success(r, next) => {
+        def concats(acc: RegExpr, next: Input): ParseResult[RegExpr] =
+          if (next.atEnd) Success(acc, next)
+          else (next.first, next.rest) match {
+            case (not, next) => not(next) match {
+              case Success(r, next) => concats(RConcat(acc, r), next)
+              case _ => Failure("expected not", next)
+            }
+            case _ => Success(acc, next)
+          }
+        concats(r, next)
+      }
+    }
 
     def not(next: Input): ParseResult[RegExpr] = star(next) match {
-      case Success(r, next) => RStar(r);
+      case Success(r, next) => RStar(r)
     }
 
     def star(next: Input): ParseResult[RegExpr] = throw new UnsupportedOperationException
