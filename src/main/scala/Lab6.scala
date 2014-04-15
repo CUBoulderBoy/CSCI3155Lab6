@@ -168,18 +168,23 @@ object Lab6 extends jsy.util.JsyApplication {
        meta-language character.  Use delimiters.contains(c) for a Char c. */
     val delimiters = Set('|', '&', '~', '*', '+', '?', '!', '#', '.', '(', ')')
 
-    def atom(next: Input): ParseResult[RegExpr] = throw new UnsupportedOperationException
-	/*  def atoms(next: Input): ParseResult[RegExpr] =
-	    if (next.atEnd) Success(next)
-	    else
-	  atoms(next)  
+    def atom(next: Input): ParseResult[RegExpr] = {
+      if (next.atEnd) Failure("empty, not able to match", next)
+      else (next.first, next.rest) match {
+        case ('!', next) => Success(RNoString, next)
+        case ('#', next) => Success(REmptyString, next)
+        case ('.', next) => Success(RAnyChar, next)
+        case ('(', next) => re(next) match {
+          case Success(reast, next) => (next.first, next.rest) match {
+            case (')', next) => Success(reast, next)
+            case _ => Failure("expected )", next)
+          }
+          case fail => fail
+        }
+        case (c, next) if !delimiters.contains(c) => Success(RSingle(c), next)
+        case _ => Failure("expected an atom", next)
+      }
     }
-	      
-	        else (next.first) match {
-	        	case '!' => atom(RNoString)
-	      }
-      atoms(next)
-    } */
 
 
     /* External Interface */
