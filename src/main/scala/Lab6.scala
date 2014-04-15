@@ -121,8 +121,18 @@ object Lab6 extends jsy.util.JsyApplication {
     //concat combines two "nots" the previous "not" is checked in the call
     //to concat while the next only needs to be verified to return true
     def concat(next: Input): ParseResult[RegExpr] = not(next) match {
-      case Success(r, next) => Success(r, next)
-      case fail => fail 
+    	case Success(r, next) => {
+	        def concats(acc: RegExpr, next: Input): ParseResult[RegExpr] =
+	          if (next.atEnd) Success(acc, next)
+	          else not(next) match {
+	              case Success(r, next) => concats(RConcat(acc, r), next)
+	              case _ => Failure("expected not", next)
+	          }
+	        concats(r, next)
+	    }
+      
+    	//Passing failure up the line
+  		case fail => fail 
     }
 
     def not(next: Input): ParseResult[RegExpr] = star(next) match {
@@ -131,11 +141,14 @@ object Lab6 extends jsy.util.JsyApplication {
 		    def nots(acc: RegExpr, next: Input): ParseResult[RegExpr] =
 		      if (next.atEnd) Success(acc, next)
 		      else (next.first, next.rest) match {
-		        case ('~', next) => star(next) match {
-		          case Success(r, next) => nots(RNeg(r), next)
+		        case ('~', rnext) => not(rnext) match{
+		          case Success(r, renext) => nots(RNeg(r), renext)
+		          case _ => Failure("didn't have anything to not", next)
+		        }
+		        case _ => star(next) match {
+		          case Success(r, renext) => nots(r, renext)
 		          case _ => Failure("expected star", next)
 		        }
-		        case _ => Success(acc, next)
 		      }
 		    nots(r, next)
 		}
@@ -162,7 +175,10 @@ object Lab6 extends jsy.util.JsyApplication {
 		          case Success(r, next) => stars(ROption(r), next)
 		          case _ => Failure("expected atom", next)
 		        }
-		        case _ => Success(acc, next)
+		        case (r, next) => atom(next) match {
+		          case Success(r, next) => stars(r, next)
+		          case fail => fail
+		        }
 	          }
 	        stars(r, next)
     	}
@@ -214,7 +230,7 @@ object Lab6 extends jsy.util.JsyApplication {
       /* Basic Operators */
       case (RNoString, _) => if (chars.length == 0) true else false
       case (REmptyString, _) => throw new UnsupportedOperationException
-      case (RSingle(_), Nil) => false
+      case (RSingle(_), Nil) => if (chars.length == 0) true else false
       case (RSingle(c1), c2 :: t) => throw new UnsupportedOperationException
       case (RConcat(re1, re2), _) => throw new UnsupportedOperationException
       case (RUnion(re1, re2), _) => throw new UnsupportedOperationException
