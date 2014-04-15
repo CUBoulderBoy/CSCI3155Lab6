@@ -78,96 +78,104 @@ object Lab6 extends jsy.util.JsyApplication {
     def re(next: Input): ParseResult[RegExpr] = union(next)
 
     def union(next: Input): ParseResult[RegExpr] = intersect(next) match {
-      case Success(r, next) => {
-        def unions(acc: RegExpr, next: Input): ParseResult[RegExpr] =
-          if (next.atEnd) Success(acc, next)
-          else (next.first, next.rest) match {
-            case ('|', next) => intersect(next) match {
-              case Success(r, next) => unions(RUnion(acc, r), next)
-              case _ => Failure("expected intersect", next)
-            }
-            case _ => Success(acc, next)
-          }
-        unions(r, next)
-      }
-      case _ => Failure("expected intersect", next)
+    	//If intersect returns a success
+    	case Success(r, next) => {
+	        def unions(acc: RegExpr, next: Input): ParseResult[RegExpr] =
+	          //Check if at end
+	          if (next.atEnd) Success(acc, next)
+	          else (next.first, next.rest) match {
+	            case ('|', next) => intersect(next) match {
+	              case Success(r, next) => unions(RUnion(acc, r), next)
+	              case _ => Failure("expected intersect", next)
+	            }
+	            case _ => Success(acc, next)
+	          }
+	        unions(r, next)
+	    }
+    	
+    	//Passing failure up the line
+    	case fail => fail
     }
 
     def intersect(next: Input): ParseResult[RegExpr] = concat(next) match {
-      case Success(r, next) => {
-        def intersects(acc: RegExpr, next: Input): ParseResult[RegExpr] =
-          if (next.atEnd) Success(acc, next)
-          else (next.first, next.rest) match {
-            case ('&', next) => concat(next) match {
-              case Success(r, next) => intersects(RIntersect(acc, r), next)
-              case _ => Failure("expected concat", next)
-            }
-            case _ => Success(acc, next)
-          }
-        intersects(r, next)
-      }
-      case _ => Failure("expected concat", next)
+    	//If concat returns a success
+    	case Success(r, next) => {
+	        def intersects(acc: RegExpr, next: Input): ParseResult[RegExpr] =
+	          //Check if at end
+	          if (next.atEnd) Success(acc, next)
+	          else (next.first, next.rest) match {
+	            case ('&', next) => concat(next) match {
+	              case Success(r, next) => intersects(RIntersect(acc, r), next)
+	              case _ => Failure("expected concat", next)
+	            }
+	            case _ => Success(acc, next)
+	          }
+	        intersects(r, next)
+    	}
+    	
+    	//Passing failure up the line
+    	case fail => fail
     }
-
+    
+    //Concat doesn't do any checking against characters. Per professor
+    //concat combines two "nots" the previous "not" is checked in the call
+    //to concat while the next only needs to be verified to return true
     def concat(next: Input): ParseResult[RegExpr] = not(next) match {
-      case Success(r, next) => {
-        def concats(acc: RegExpr, next: Input): ParseResult[RegExpr] =
-          if (next.atEnd) Success(acc, next)
-          else (next.rest) match {
-            case next => not(next) match {
-              case Success(r, next) => concats(RConcat(acc, r), next)
-              case _ => Failure("expected not", next)
-            }
-          }
-        concats(r, next)
-      }
-      case _ => Failure("expected not", next)
+      case Success(r, next) => Success(r, next)
+      case fail => fail 
     }
 
     def not(next: Input): ParseResult[RegExpr] = star(next) match {
-      case Success(r, next) => {
-        def nots(acc: RegExpr, next: Input): ParseResult[RegExpr] =
-          if (next.atEnd) Success(acc, next)
-          else (next.first, next.rest) match {
-            case ('~', next) => not(next) match {
-              case Success(r, next) => nots(RNeg(r), next)
-              case _ => Failure("expected star", next)
-            }
-            case _ => Success(acc, next)
-          }
-        nots(r, next)
-      }
-      case _ => Failure("expected star", next)
+    	//If start returns success
+    	case Success(r, next) => {
+		    def nots(acc: RegExpr, next: Input): ParseResult[RegExpr] =
+		      if (next.atEnd) Success(acc, next)
+		      else (next.first, next.rest) match {
+		        case ('~', next) => star(next) match {
+		          case Success(r, next) => nots(RNeg(r), next)
+		          case _ => Failure("expected star", next)
+		        }
+		        case _ => Success(acc, next)
+		      }
+		    nots(r, next)
+		}
+		
+		//Passing failure up the line
+		case fail => fail
     }
 
     def star(next: Input): ParseResult[RegExpr] = atom(next) match {
-      case Success(r, next) => {
-        def stars(acc: RegExpr, next: Input): ParseResult[RegExpr] =
-          if (next.atEnd) Success(acc, next)
-          else (next.first, next.rest) match {
-	        case ('*', next) => atom(next) match {
-	          case Success(r, next) => stars(RStar(r), next)
-	          case _ => Failure("expected atom", next)
-	        }
-	        case ('+', next) => atom(next) match {
-	          case Success(r, next) => stars(RPlus(r), next)
-	          case _ => Failure("expected atom", next)
-	        }
-	        case ('?', next) => atom(next) match {
-	          case Success(r, next) => stars(ROption(r), next)
-	          case _ => Failure("expected atom", next)
-	        }
-	        case _ => Success(acc, next)
-          }
-        stars(r, next)
-      }
-      case _ => Failure("expected atom", next)
+    	//If atom returns a success
+    	case Success(r, next) => {
+	        def stars(acc: RegExpr, next: Input): ParseResult[RegExpr] =
+	          if (next.atEnd) Success(acc, next)
+	          else (next.first, next.rest) match {
+		        case ('*', next) => atom(next) match {
+		          case Success(r, next) => stars(RStar(r), next)
+		          case _ => Failure("expected atom", next)
+		        }
+		        case ('+', next) => atom(next) match {
+		          case Success(r, next) => stars(RPlus(r), next)
+		          case _ => Failure("expected atom", next)
+		        }
+		        case ('?', next) => atom(next) match {
+		          case Success(r, next) => stars(ROption(r), next)
+		          case _ => Failure("expected atom", next)
+		        }
+		        case _ => Success(acc, next)
+	          }
+	        stars(r, next)
+    	}
+    	
+    	//Passing failure up the line
+    	case fail => fail
     }
 
     /* This set is useful to check if a Char is/is not a regular expression
        meta-language character.  Use delimiters.contains(c) for a Char c. */
     val delimiters = Set('|', '&', '~', '*', '+', '?', '!', '#', '.', '(', ')')
 
+    //This code all came from lecture and is correct, do not change!
     def atom(next: Input): ParseResult[RegExpr] = {
       if (next.atEnd) Failure("empty, not able to match", next)
       else (next.first, next.rest) match {
