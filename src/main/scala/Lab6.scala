@@ -143,7 +143,7 @@ object Lab6 extends jsy.util.JsyApplication {
     def star(next: Input): ParseResult[RegExpr] = atom(next) match {
       case Success(r, next) => {
         def stars(acc: RegExpr, next: Input): ParseResult[RegExpr] =
-          if (next.atEnd) Success (r, next)
+          if (next.atEnd) Success(acc, next)
           else (next.first, next.rest) match {
 	        case ('*', next) => atom(next) match {
 	          case Success(r, next) => stars(RStar(r), next)
@@ -157,6 +157,7 @@ object Lab6 extends jsy.util.JsyApplication {
 	          case Success(r, next) => stars(ROption(r), next)
 	          case _ => Failure("expected atom", next)
 	        }
+	        case _ => Success(acc, next)
           }
         stars(r, next)
       }
@@ -167,7 +168,18 @@ object Lab6 extends jsy.util.JsyApplication {
        meta-language character.  Use delimiters.contains(c) for a Char c. */
     val delimiters = Set('|', '&', '~', '*', '+', '?', '!', '#', '.', '(', ')')
 
-    def atom(next: Input): ParseResult[RegExpr] = throw new UnsupportedOperationException
+    def atom(next: Input): ParseResult[RegExpr] = {/*throw new UnsupportedOperationException */
+	  def atoms(next: Input): ParseResult[RegExpr] =
+	    if (next.atEnd) Success(next)
+	    else
+	  atoms(next)  
+    }
+	      
+	        else (next.first) match {
+	        	case '!' => atom(RNoString)
+	      }
+      atoms(next)
+    } 
 
 
     /* External Interface */
