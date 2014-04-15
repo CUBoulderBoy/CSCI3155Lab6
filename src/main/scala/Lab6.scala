@@ -130,7 +130,7 @@ object Lab6 extends jsy.util.JsyApplication {
           if (next.atEnd) Success(acc, next)
           else (next.first, next.rest) match {
             case ('~', next) => not(next) match {
-              case Success(r, next) => nots(RStar(r), next)
+              case Success(r, next) => nots(RNeg(r), next)
               case _ => Failure("expected star", next)
             }
             case _ => Success(acc, next)
@@ -168,8 +168,8 @@ object Lab6 extends jsy.util.JsyApplication {
        meta-language character.  Use delimiters.contains(c) for a Char c. */
     val delimiters = Set('|', '&', '~', '*', '+', '?', '!', '#', '.', '(', ')')
 
-    def atom(next: Input): ParseResult[RegExpr] = {/*throw new UnsupportedOperationException */
-	  def atoms(next: Input): ParseResult[RegExpr] =
+    def atom(next: Input): ParseResult[RegExpr] = throw new UnsupportedOperationException
+	/*  def atoms(next: Input): ParseResult[RegExpr] =
 	    if (next.atEnd) Success(next)
 	    else
 	  atoms(next)  
@@ -179,7 +179,7 @@ object Lab6 extends jsy.util.JsyApplication {
 	        	case '!' => atom(RNoString)
 	      }
       atoms(next)
-    } 
+    } */
 
 
     /* External Interface */
@@ -199,9 +199,9 @@ object Lab6 extends jsy.util.JsyApplication {
   def retest(re: RegExpr, s: String): Boolean = {
     def test(re: RegExpr, chars: List[Char], sc: List[Char] => Boolean): Boolean = (re, chars) match {
       /* Basic Operators */
-      case (RNoString, _) => throw new UnsupportedOperationException
+      case (RNoString, _) => if (chars.length == 0) true else false
       case (REmptyString, _) => throw new UnsupportedOperationException
-      case (RSingle(_), Nil) => throw new UnsupportedOperationException
+      case (RSingle(_), Nil) => false
       case (RSingle(c1), c2 :: t) => throw new UnsupportedOperationException
       case (RConcat(re1, re2), _) => throw new UnsupportedOperationException
       case (RUnion(re1, re2), _) => throw new UnsupportedOperationException
