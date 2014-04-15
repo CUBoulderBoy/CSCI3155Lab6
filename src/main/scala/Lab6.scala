@@ -106,44 +106,62 @@ object Lab6 extends jsy.util.JsyApplication {
           }
         intersects(r, next)
       }
+      case _ => Failure("expected concat", next)
     }
 
     def concat(next: Input): ParseResult[RegExpr] = not(next) match {
       case Success(r, next) => {
         def concats(acc: RegExpr, next: Input): ParseResult[RegExpr] =
           if (next.atEnd) Success(acc, next)
-          else (next.first, next.rest) match {
-            case (not, next) => not(next) match {
+          else (next.rest) match {
+            case next => not(next) match {
               case Success(r, next) => concats(RConcat(acc, r), next)
               case _ => Failure("expected not", next)
             }
-            case _ => Success(acc, next)
           }
         concats(r, next)
       }
+      case _ => Failure("expected not", next)
     }
 
     def not(next: Input): ParseResult[RegExpr] = star(next) match {
-      case Success(r, next) => RStar(r)
+      case Success(r, next) => {
+        def nots(acc: RegExpr, next: Input): ParseResult[RegExpr] =
+          if (next.atEnd) Success(acc, next)
+          else (next.first, next.rest) match {
+            case ('~', next) => not(next) match {
+              case Success(r, next) => nots(RStar(r), next)
+              case _ => Failure("expected star", next)
+            }
+            case _ => Success(acc, next)
+          }
+        nots(r, next)
+      }
+      case _ => Failure("expected star", next)
     }
 
-    def star(next: Input): ParseResult[RegExpr] = throw new UnsupportedOperationException
-    /*                                            atom(next) match {
-      case Success(r, next) => (r, next) match {
-        case ('+', next) => atom(next) match {
-          case Success(r, next) => ???
-          case _ => Failure(expected atom", next)
-        }
-        case ('*', next) => atom(next) match {
-          case Success(r, next) => ???
-          case _ => Failure(expected atom", next)
-        }
-        case ('?', next) => atom(next) match {
-          case Success(r, next) => ???
-          case _ => Failure(expected atom", next)
-        }
+    def star(next: Input): ParseResult[RegExpr] = atom(next) match {
+      case Success(r, next) => {
+        def stars(acc: RegExpr, next: Input): ParseResult[RegExpr] =
+          if (next.atEnd) Success (r, next)
+          else (next.first, next.rest) match {
+	        case ('*', next) => atom(next) match {
+	          case Success(r, next) => stars(RStar(r), next)
+	          case _ => Failure("expected atom", next)
+	        }
+	        case ('+', next) => atom(next) match {
+	          case Success(r, next) => stars(RPlus(r), next)
+	          case _ => Failure("expected atom", next)
+	        }
+	        case ('?', next) => atom(next) match {
+	          case Success(r, next) => stars(ROption(r), next)
+	          case _ => Failure("expected atom", next)
+	        }
+          }
+        stars(r, next)
       }
-    } */
+      case _ => Failure("expected atom", next)
+    }
 
     /* This set is useful to check if a Char is/is not a regular expression
        meta-language character.  Use delimiters.contains(c) for a Char c. */
