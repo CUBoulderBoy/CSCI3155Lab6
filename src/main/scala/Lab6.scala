@@ -3,11 +3,11 @@ import jsy.lab6.JsyParser
 
 object Lab6 extends jsy.util.JsyApplication {
   import jsy.lab6.ast._
-  
+
   /*
    * CSCI 3155: Lab 6
    * <Your Name>
-   * 
+   *
    * Partner: <Your Partner's Name>
    * Collaborators: <Any Collaborators>
    */
@@ -15,26 +15,26 @@ object Lab6 extends jsy.util.JsyApplication {
   /*
    * Fill in the appropriate portions above by replacing things delimited
    * by '<'... '>'.
-   * 
+   *
    * Replace 'YourIdentiKey' in the object name above with your IdentiKey.
-   * 
+   *
    * Replace the 'throw new UnsupportedOperationException' expression with
    * your code in each function.
-   * 
+   *
    * Do not make other modifications to this template, such as
    * - adding "extends App" or "extends Application" to your Lab object,
    * - adding a "main" method, and
    * - leaving any failing asserts.
-   * 
+   *
    * Your lab will not be graded if it does not compile.
-   * 
+   *
    * This template compiles without error. Before you submit comment out any
    * code that does not compile or causes a failing assert.  Simply put in a
    * 'throws new UnsupportedOperationException' as needed to get something
    * that compiles without error.
    */
 
-  
+
   /*** Regular Expression Parsing ***/
   import scala.util.parsing.combinator.Parsers
   import scala.util.parsing.input.Reader
@@ -42,16 +42,16 @@ object Lab6 extends jsy.util.JsyApplication {
 
   /* We define a recursive decent parser for regular expressions in
    * RegExprParser.
-   * 
+   *
    * We derive RegExprParser from Parsers in the Scala library to make
    * use of it's handing of input (Input) and parsing results
    * (ParseResult).
-   * 
+   *
    * The Parsers trait is actually a general purpose combinator parser
    * library that we will not use.
-   * 
+   *
    * Grammar
-   * 
+   *
    *   re ::= union
    *   union ::= intersect {| intersect}
    *   intersect ::= concat {& concat}
@@ -59,13 +59,13 @@ object Lab6 extends jsy.util.JsyApplication {
    *   not ::= ~ not | star
    *   star ::= atom {*|+|?}
    *   atom ::= ! | # | c | . | ( re )
-   * 
+   *
    */
   object RegExprParser extends Parsers {
     type Elem = Char
 
     /* The following items are the relevant pieces inherited from Parsers
-     * 
+     *
      * type Input = Reader[Elem]
      * sealed abstract class ParseResult[+T] {
      *   val next: Input
@@ -74,7 +74,7 @@ object Lab6 extends jsy.util.JsyApplication {
      * case class Success[+T](result: T, next: Input) extends ParseResult[T]
      * case class Failure(next: Input) extends ParseResult[Nothing]
      */
-    
+
     def re(next: Input): ParseResult[RegExpr] = union(next)
 
     def union(next: Input): ParseResult[RegExpr] = intersect(next) match {
@@ -97,19 +97,37 @@ object Lab6 extends jsy.util.JsyApplication {
 
     def concat(next: Input): ParseResult[RegExpr] = throw new UnsupportedOperationException
 
-    def not(next: Input): ParseResult[RegExpr] = throw new UnsupportedOperationException
+    def not(next: Input): ParseResult[RegExpr] = star(next) match {
+      case Success(r, next) => RStar(r);
+    }
 
     def star(next: Input): ParseResult[RegExpr] = throw new UnsupportedOperationException
+    /*                                            atom(next) match {
+      case Success(r, next) => (r, next) match {
+        case ('+', next) => atom(next) match {
+          case Success(r, next) => ???
+          case _ => Failure(expected atom", next)
+        }
+        case ('*', next) => atom(next) match {
+          case Success(r, next) => ???
+          case _ => Failure(expected atom", next)
+        }
+        case ('?', next) => atom(next) match {
+          case Success(r, next) => ???
+          case _ => Failure(expected atom", next)
+        }
+      }
+    } */
 
     /* This set is useful to check if a Char is/is not a regular expression
        meta-language character.  Use delimiters.contains(c) for a Char c. */
     val delimiters = Set('|', '&', '~', '*', '+', '?', '!', '#', '.', '(', ')')
 
     def atom(next: Input): ParseResult[RegExpr] = throw new UnsupportedOperationException
-    
+
 
     /* External Interface */
-    
+
     def parse(next: Input): RegExpr = re(next) match {
       case Success(r, next) if (next.atEnd) => r
       case Success(_, next) => throw new SyntaxError("remaining input", next.pos)
@@ -117,11 +135,11 @@ object Lab6 extends jsy.util.JsyApplication {
     }
 
     def parse(s: String): RegExpr = parse(new CharSequenceReader(s))
-  } 
-  
+  }
+
 
   /*** Regular Expression Matching ***/
-  
+
   def retest(re: RegExpr, s: String): Boolean = {
     def test(re: RegExpr, chars: List[Char], sc: List[Char] => Boolean): Boolean = (re, chars) match {
       /* Basic Operators */
@@ -137,23 +155,23 @@ object Lab6 extends jsy.util.JsyApplication {
       case (RAnyChar, Nil) => false
       case (RAnyChar, _ :: t) => sc(t)
       case (RPlus(re1), _) => throw new UnsupportedOperationException
-      case (ROption(re1), _) => throw new UnsupportedOperationException 
-      
+      case (ROption(re1), _) => throw new UnsupportedOperationException
+
       /***** Extra Credit Cases *****/
-      case (RIntersect(re1, re2), _) => throw new UnsupportedOperationException 
-      case (RNeg(re1), _) => throw new UnsupportedOperationException 
-    } 
+      case (RIntersect(re1, re2), _) => throw new UnsupportedOperationException
+      case (RNeg(re1), _) => throw new UnsupportedOperationException
+    }
     test(re, s.toList, { chars => chars.isEmpty })
   }
-  
-  
+
+
   /*** JavaScripty Interpreter ***/
 
   /* This part is optional and only for fun.
-   * 
+   *
    * If you want your own complete JavaScripty interpreter, you can copy your
    * Lab 5 interpreter here and extend it for the Lab 6 constructs.
-   * 
+   *
    * By default, a reference JavaScripty interpreter will run using your
    * regular expression tester.
    */
@@ -161,7 +179,7 @@ object Lab6 extends jsy.util.JsyApplication {
     /* Type checking. */
     def typeInfer(env: Map[String,(Mutability,Typ)], e: Expr): Typ =
       throw new UnsupportedOperationException
-    
+
     /* A small-step transition. */
     def stepre(retest: (RegExpr, String) => Boolean)(e: Expr): DoWith[Mem, Expr] = {
       def step(e: Expr): DoWith[Mem, Expr] = {
@@ -189,21 +207,21 @@ object Lab6 extends jsy.util.JsyApplication {
   // Select the interpreter to use based on the useReferenceJsyInterpreter flag
   val interpreter: jsy.lab6.Interpreter =
     if (useReferenceJsyInterpreter) jsy.lab6.JsyInterpreter else MyInterpreter
-  
+
   def inferType(e: Expr): Typ = {
     if (debug) {
       println("------------------------------------------------------------")
       println("Type checking: %s ...".format(e))
-    } 
+    }
     val t = interpreter.typeInfer(Map.empty, e)
     if (debug) {
       println("Type: " + pretty(t))
     }
     t
   }
-  
-  // Interface to run your small-step interpreter and print out the steps of evaluation if debugging. 
-  
+
+  // Interface to run your small-step interpreter and print out the steps of evaluation if debugging.
+
   case class TerminationError(e: Expr) extends Exception {
     override def toString = JsyParser.formatErrorMessage(e.pos, "TerminationError", "run out of steps in evaluating " + e)
   }
@@ -233,14 +251,14 @@ object Lab6 extends jsy.util.JsyApplication {
     }
     v
   }
-  
+
   // Select the parser to use based on the useReferenceRegExprParser flag
   def parser: JsyParser =
     if (useReferenceRegExprParser) new JsyParser else new JsyParser(RegExprParser.parse)
 
   // Convenience to pass in a jsy expression as a string.
   def iterateStep(s: String): Expr = iterateStep(parser.parse(s))
-  
+
   // Interface for main
   def processFile(file: java.io.File) {
     if (debug) {
@@ -249,22 +267,22 @@ object Lab6 extends jsy.util.JsyApplication {
       if (useReferenceRegExprParser) println("Parsing with reference RegExpr parser ...")
       else println("Parsing with your RegExpr parser ...")
     }
-    
+
     val expr =
       handle(None: Option[Expr]) {Some{
         parser.parseFile(file)
       }} getOrElse {
         return
       }
-    
+
     handle() {
       val t = inferType(expr)
     }
-    
+
     handle() {
       val v1 = iterateStep(expr)
       println(pretty(v1))
     }
   }
-  
+
 }
