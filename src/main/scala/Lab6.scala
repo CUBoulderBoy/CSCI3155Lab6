@@ -119,12 +119,12 @@ object Lab6 extends jsy.util.JsyApplication {
 	        def concats(acc: RegExpr, next: Input): ParseResult[RegExpr] =
 	          if (next.atEnd) Success(acc, next)
 	          else not(next) match {
-	              case Success(r, next) => Success(RConcat(acc, r), next)
-	              case _ => Failure("expected not", next)
+	              case Success(r, next) => concats(RConcat(acc, r), next)
+	              case _ => Success(acc, next)
 	          }
 	        concats(r, next)
 	    }
-  		case fail => fail 
+  		case fail => fail
     }
 
     def not(next: Input): ParseResult[RegExpr] = (next.first, next.rest) match {
@@ -192,21 +192,22 @@ object Lab6 extends jsy.util.JsyApplication {
   /*** Regular Expression Matching ***/
 
   def retest(re: RegExpr, s: String): Boolean = {
+    println("re: " + re.toString() + ", s: " + s)
     def test(re: RegExpr, chars: List[Char], sc: List[Char] => Boolean): Boolean = (re, chars) match {
       /* Basic Operators */
-      case (RNoString, _) => if (chars.length == 0) true else false
-      case (REmptyString, _) => throw new UnsupportedOperationException
-      case (RSingle(_), Nil) => if (chars.length == 0) true else false
-      case (RSingle(c1), c2 :: t) => throw new UnsupportedOperationException
-      case (RConcat(re1, re2), _) => throw new UnsupportedOperationException
-      case (RUnion(re1, re2), _) => throw new UnsupportedOperationException
-      case (RStar(re1), _) => throw new UnsupportedOperationException
+      case (RNoString, _) => false
+      case (REmptyString, _) => sc(chars)
+      case (RSingle(_), Nil) => false
+      case (RSingle(c1), c2 :: t) => if (c1 == c2) sc(t) else false
+      case (RConcat(re1, re2), _) => test(re1, chars, { next => test(re2, next, sc) })
+      case (RUnion(re1, re2), _) => test(re1, chars, sc) || test(re2, chars, sc)
+      case (RStar(re1), _) => if (chars.isEmpty) true else test(re1, chars, { next => test(re, chars.drop(1).dropRight(chars.size - 1), sc)})
 
       /* Extended Operators */
       case (RAnyChar, Nil) => false
       case (RAnyChar, _ :: t) => sc(t)
       case (RPlus(re1), _) => throw new UnsupportedOperationException
-      case (ROption(re1), _) => throw new UnsupportedOperationException
+      case (ROption(re1), _) => if (chars.isEmpty) true else test(re1, chars, sc)
 
       /***** Extra Credit Cases *****/
       case (RIntersect(re1, re2), _) => throw new UnsupportedOperationException
