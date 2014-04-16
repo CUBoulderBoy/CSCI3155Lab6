@@ -201,17 +201,17 @@ object Lab6 extends jsy.util.JsyApplication {
       case (RSingle(c1), c2 :: t) => if (c1 == c2) sc(t) else false
       case (RConcat(re1, re2), _) => test(re1, chars, { next => test(re2, next, sc) })
       case (RUnion(re1, re2), _) => test(re1, chars, sc) || test(re2, chars, sc)
-      case (RStar(re1), _) => if (chars.isEmpty) true else test(re1, chars, { next => test(re, chars.drop(1).dropRight(chars.size - 1), sc)})
+      case (RStar(re1), _) => if (chars.isEmpty) true else chars.forall( a => test(re1, a::Nil, sc))
 
       /* Extended Operators */
       case (RAnyChar, Nil) => false
       case (RAnyChar, _ :: t) => sc(t)
-      case (RPlus(re1), _) => throw new UnsupportedOperationException
+      case (RPlus(re1), _) => chars.forall( a => test(re1, a::Nil, sc))
       case (ROption(re1), _) => if (chars.isEmpty) true else test(re1, chars, sc)
 
       /***** Extra Credit Cases *****/
-      case (RIntersect(re1, re2), _) => throw new UnsupportedOperationException
-      case (RNeg(re1), _) => throw new UnsupportedOperationException
+      case (RIntersect(re1, re2), _) => test(re1, chars, sc) && test(re2, chars, sc)
+      case (RNeg(re1), _) => test(re1, chars, sc)
     }
     test(re, s.toList, { chars => chars.isEmpty })
   }
