@@ -201,12 +201,12 @@ object Lab6 extends jsy.util.JsyApplication {
       case (RSingle(c1), c2 :: t) => if (c1 == c2) sc(t) else false
       case (RConcat(re1, re2), _) => test(re1, chars, { next => test(re2, next, sc) })
       case (RUnion(re1, re2), _) => test(re1, chars, sc) || test(re2, chars, sc)
-      case (RStar(re1), _) => if (chars.isEmpty) true else chars.forall( a => test(re1, a::Nil, sc))
+      case (RStar(re1), _) => sc(chars) || test(re1, chars, { next => if (next.size < chars.size) test(RStar(re1), next, sc) else false })
 
       /* Extended Operators */
       case (RAnyChar, Nil) => false
       case (RAnyChar, _ :: t) => sc(t)
-      case (RPlus(re1), _) => chars.forall( a => test(re1, a::Nil, sc))
+      case (RPlus(re1), _) => test(RConcat(re1, RStar(re1)), chars, sc)
       case (ROption(re1), _) => if (chars.isEmpty) true else test(re1, chars, sc)
 
       /***** Extra Credit Cases *****/
